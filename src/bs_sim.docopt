@@ -1,0 +1,26 @@
+Bisulfite treatment simulator.
+
+Usage:
+  bs_sim --help
+  bs_sim --version
+  bs_sim -i INPUT.BAM -o OUTPUT.BAM [--lambda=<rate>] [--tau=<rate>] 
+         [--methylation=<rate>] [--methylation-profile=<PROFILE.TBX>]
+         [--seed=<integer>]
+
+Options:
+  -h --help           Show this screen.
+  -v --version        Show version.
+  -i --input=FILE     Input SAM/BAM file.
+  -o --output=FILE    Output SAM/BAM file.
+  -l --lambda=<rate>  Probability of conversion from cytosine
+                      to thymine [default: 0.99].
+  -t --tau=<rate>     Probability of conversion from methylated cytosine
+                      to thymine [default: 0.05].
+  -m --methylation=<rate>
+                      Probability of cytosine being methylated [default: 0.90].
+  -p --methylation-profile=<PROFILE.TBX>
+                      Tabix-format file with methylation probability for 
+                      each genomic position.
+  -s --seed=<integer> Seed for random number generation,
+                      to make experiments repeatable.
+
