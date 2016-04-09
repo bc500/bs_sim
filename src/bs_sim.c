@@ -150,6 +150,8 @@ int weighted_random_selection(int size, int* elem, float* weights) {
 #define bam_is_paired(b) (((b)->core.flag&BAM_FPAIRED) != 0)
 #define bam_is_proper_pair(b) (((b)->core.flag&BAM_FPROPER_PAIR) != 0)
 #define bam_get_target_name(h, b) ((h)->target_name[(b)->core.tid])
+#define bam_is_read1(b) (((b)->core.flag&BAM_FREAD1) != 0)
+#define bam_is_read2(b) (((b)->core.flag&BAM_FREAD2) != 0)
 
 /*
 Find the position in the reference for a position from the sequence,
@@ -194,6 +196,7 @@ static int process_aln(const bam_hdr_t *h, bam1_t *b, settings_t *settings)
   //printf("QNAME: %s \tPOS: %d:%d \tLEN: %d \t \n", bam_get_qname(b), b->core.tid, b->core.pos, b->core.l_qseq);
   //printf("QNAME: %s \tPOS: %s:%d \tLEN: %d \t ENDPOS: %d \n", bam_get_qname(b), bam_get_target_name(h,b), b->core.pos, b->core.l_qseq, bam_endpos(b));
   //printf("\tReverse: %d\tPaired in sequencing: %d\t Paired in mapping: %d\n", bam_is_rev(b), bam_is_paired(b), bam_is_proper_pair(b));
+  //printf("\tRead1: %d\tRead2: %d\n", bam_is_read1(b), bam_is_read2(b));
   static int warn_nt = 0;
   char* region_name = bam_get_target_name(h,b);
   uint8_t *seq = bam_get_seq(b);
@@ -202,7 +205,11 @@ static int process_aln(const bam_hdr_t *h, bam1_t *b, settings_t *settings)
 
   uint8_t *qual = bam_get_qual(b);
 
-  int is_reverse = bam_is_rev(b);
+  /*
+    Read1+ and Read2-  convert C->T
+    Read1- and Read2+  convert G->A
+  */
+  int reversed =  (bam_is_read1(b) && bam_is_rev(b)) || (bam_is_read2(b) && !bam_is_rev(b));
 
   // for(i=0; i<len; i++) {
   //   printf("%c", NT16_SYMBOL[bam_seqi(seq, i)]);
@@ -243,8 +250,8 @@ static int process_aln(const bam_hdr_t *h, bam1_t *b, settings_t *settings)
       }
     }
 
-    /* Complement the reverse read */
-    if(is_reverse) {
+    /* Complement the read to handle G->A case */
+    if(reversed) {
       nt = nt16_complement[nt];
     }
 
@@ -312,8 +319,8 @@ static int process_aln(const bam_hdr_t *h, bam1_t *b, settings_t *settings)
 
     if(nt != new_base) {
       /* Complement the reverse read */
-      if(is_reverse) {
-	       new_base = nt16_complement[new_base];
+      if(reversed) {
+	new_base = nt16_complement[new_base];
       }
 
       /* Update read with new base */
